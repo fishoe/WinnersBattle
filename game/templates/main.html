@@ -1,0 +1,136 @@
+﻿<!DOCTYPE html>
+
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml">
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script type="text/javascript">
+        var connect
+        var pId
+        var mId
+        function tosign(){
+            document.getElementById('intro').style.display = 'none';
+            document.getElementById('name').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('sign').style.display = 'inline';
+        }
+        function tointro(){
+            document.getElementById('sign').style.display = 'none';
+            document.getElementById('sign_pswd') = '';
+            document.getElementById('sign_name').value = '';
+            document.getElementById('intro').style.display = 'inline';
+        }
+
+        function login() {
+            connect = new WebSocket('ws://localhost:8000/');
+
+            connect.onopen = function(evt){onOpen(evt)};
+            connect.onclose = function(evt){onClose(evt)};
+            connect.onmessage = function(evt){onMessage(evt)};
+            connect.onerror = function(evt){onError(evt)};
+        }
+
+        function onOpen(evt){
+            var pName = document.getElementById('name');
+            var pw = document.getElementById('password');
+            var pInfo={
+                stat : '0',
+                id : pName.value,
+                pw : pw.value
+            };
+            connect.send(JSON.stringify(pInfo));
+            pw.value='';
+            pName.value='';
+        }
+
+        function onClose(evt){
+        }
+
+        function onMessage(evt){
+            console.log(evt.data);
+            msg = JSON.parse(evt.data);
+            console.log(msg.stat);
+            switch(msg.stat){
+                case '0':
+                    document.getElementById('playing').style.display = 'none';
+
+                    if(msg.winner == pId){
+                        document.getElementById('result').innerHTML = 'YOU WON!';
+                    }
+                    else{
+                        document.getElementById('result').innerHTML = 'YOU LOSE...';
+                    }
+                    document.getElementById('result').style.display
+                    break;
+                case '1':
+                    document.getElementById('intro').style.display = 'none';
+                    document.getElementById('waiting').style.display = 'none';
+                    pId = msg.pId;
+                    mId = msg.matchNo;
+                    document.getElementById('playing').style.display = 'inline';
+                    break;
+                case '2':
+                    document.getElementById('intro').style.display = 'none';
+                    document.getElementById('waiting').style.display = 'inline';
+                    break;
+            }
+        }
+
+        function onError(evt){
+        }
+
+        function sendHand(hand){
+            connect
+        }
+
+        function signReq(){
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "/sign", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function (e) {
+                if (xhr.readyState === 4 && xhr.status === 200) {
+                    document.getElementById("sign").style.display = "none";
+                    document.getElementById("intro").style.display = "inline";
+                }
+            }
+            pid = document.getElementById("sign_name").value;
+            pass = document.getElementById("sign_pswd").value;
+            xhr.send("sign_name=" + pid + "&sign_pswd=" + pass);
+        }
+        function log(t){
+            console.log(t)
+        }
+    </script>
+</head>
+<body>
+    <div id="intro">
+        <h1>Rock, Scissor, Paper</h1>
+        <p>player</p>
+        <p>player name : <input type="text" name="player_name" id="name"/></p>
+        <p>password : <input type="password" name="player_pw" id="password"/></p>
+        <input type="button" value="play" onclick="login()" >
+        <input type="button" value="sign" onclick="tosign()" >
+    </div>
+    <div id="waiting"style="display:none">
+        <h1>waiting for player...</h1>
+        <input type="button" value="test" onclick="test()" style="display:none"/>
+    </div>
+    <div id="playing" style="display:none">
+        <h2 id="player_name">{{ player.player_name }}</h2>
+        
+        <input type="button" value="rock" onclick="sendHand('1')" />
+        <input type="button" value="scissor" onclick="sendHand('2')" />
+        <input type="button" value="paper" onclick="sendHand('3')" />
+    </div>
+    <div id="results" style="display:none">
+        <h1 id="result"></h1>
+    </div>
+    <div id="sign" style="display:none">
+        <h1 id = "head">Sign Form</h1>
+        <p>id : <input type="text" name="sign_name" id = "sign_name"/></p>
+        <p>password : <input type="password" name="sign_pswd" id="sign_pswd"/></p>
+        <input type="button" value="submit" onclick="signReq()"/>
+        <input type="button" value="cancel" onclick='tointro()'/>
+    </div>
+</body>
+</html>
